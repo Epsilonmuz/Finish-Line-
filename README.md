@@ -19,7 +19,24 @@
 
 Strong evidence: tracking progress yourself (138 randomized studies) and if-then plans ("When I open Xcode after dinner, I will fix X"). Moderate: focusing on a committed goal pushes rivals out of mind; unfinished work leaves attention residue. The 2-project limit and the prioritizer weights are design choices, not proven numbers, which is why swaps are allowed and the prioritizer learns.
 
-## Run the iPhone app
+## Install on iPhone without Xcode (free)
+
+Every push is built on GitHub's Macs by the **iPhone build** workflow. Pushes to `main` publish `FinishLine.ipa` on the [Releases page](https://github.com/Epsilonmuz/Finish-Line-/releases).
+
+One-time setup (the only time you need the Mac):
+
+1. iPhone: install **LocalDevVPN** from the App Store, and turn on Settings › Privacy & Security › Developer Mode.
+2. Mac: download **iloader** from [iloader.app](https://iloader.app), plug in the iPhone, sign in with your Apple ID, click **Install SideStore**.
+3. iPhone: open SideStore, connect LocalDevVPN, and finish SideStore's setup.
+
+Then, for every new build:
+
+4. On the iPhone, open the Releases page in Safari, download `FinishLine.ipa`, and open it with SideStore (or SideStore › My Apps › +).
+5. Every 7 days: open SideStore with LocalDevVPN on and tap **Refresh All**. No computer.
+
+Free Apple IDs allow 3 sideloaded apps at once, and SideStore counts as one.
+
+## Run the iPhone app from Xcode
 
 1. Double-click `FinishLine.xcodeproj` (Xcode 26, iOS 26 on the phone).
 2. Signing & Capabilities › Team: your Apple ID. Change the bundle ID if Xcode says it's taken.
