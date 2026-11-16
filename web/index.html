@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Finish Line · Web Testing Lab</title>
 <link rel="icon" href="icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finish Line">
+<meta name="theme-color" content="#0e0e10">
 <style>
 :root{
   --bg:#0e0e10; --card:#1a1a1c; --line:rgba(255,255,255,.08); --gold:#c9a86a; --stop:#eb2924;
@@ -99,21 +106,28 @@ pre.ci{white-space:pre-wrap;font-family:inherit;font-size:13px;margin:6px 0}
 
 /* Phone-sized screens: the app fills the screen, lab tools open from a button */
 .labfab{display:none}
+.labclose{display:none;margin-left:auto;background:none;border:1px solid rgba(91,141,239,.4);color:var(--lab);border-radius:14px;padding:4px 12px;font-size:13px}
 @media (max-width: 760px){
   .shell{padding:0;display:block}
   .phone{width:100%;height:100dvh;border:none;border-radius:0}
+  .screen{padding-top:calc(4px + env(safe-area-inset-top))}
+  .tabbar{height:calc(62px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
+  .stop{padding-top:calc(40px + env(safe-area-inset-top))}
+  .sheet .panel{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
   .status{display:none}
   .labpanel{display:none;position:fixed;inset:auto 0 0 0;width:auto;top:auto;max-height:70vh;overflow-y:auto;background:#0b0d12;z-index:50;padding:16px;border-top:1px solid rgba(91,141,239,.4);border-radius:18px 18px 0 0}
   .labpanel.open{display:block}
-  .labfab{display:block;position:fixed;right:14px;bottom:96px;z-index:40;background:var(--lab);color:#fff;border:none;border-radius:22px;padding:9px 14px;font-weight:700;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.5)}
-  .toast{top:12px}
+  .labclose{display:block}
+  .labfab{display:block;position:fixed;right:14px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:40;background:var(--lab);color:#fff;border:none;border-radius:22px;padding:9px 14px;font-weight:700;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+  .toast{top:calc(10px + env(safe-area-inset-top))}
+  body.app .labfab{opacity:.55}
 }
 </style>
 </head>
 <body>
 <div class="shell">
   <aside class="labpanel" id="labpanel">
-    <h1><img src="icon.png" alt="">Finish Line Lab</h1>
+    <h1><img src="icon.png" alt="">Finish Line Lab<button class="labclose" id="labclose">Close</button></h1>
     <p>Test the iPhone app in your browser. Same screens, same rules, same alarm sounds. Data stays in this browser.</p>
     <div class="labgroup">
       <h3>Clock</h3>
@@ -413,7 +427,12 @@ function nowScreen(){
   if (s.p) actions += `<span style="flex:1"></span><a class="btn ghost" style="color:var(--gold);text-decoration:none" href="${esc(claudeURL(s.p))}" target="_blank" rel="noopener" data-act="copyPrompt" data-v="${s.p.id}">✦ Ask Claude</a>`;
   const sess = S.sessionStart ? `<div>Working for <span class="timer" id="sesstimer"></span></div><div class="dim small" style="margin-top:4px">Break reminder at ${S.settings.breakMinutes} min.</div><div class="row"><button class="btn" data-act="endSession">End session</button></div>`
                               : `<div class="dim small">Start a session to get a break reminder after ${S.settings.breakMinutes} minutes.</div><div class="row"><button class="btn" data-act="startSession">Start session</button></div>`;
-  return `<div class="navtitle">Now</div>
+  const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  const hint = (!standalone && window.innerWidth <= 760 && !S.hideInstall) ? `<div class="card" style="border-color:rgba(201,168,106,.5)">
+    <div class="label" style="color:var(--gold)">Install on your iPhone</div>
+    <div class="small">In Safari tap <b>Share</b> (the square with the arrow), then <b>Add to Home Screen</b>. Finish Line then opens full screen with its own icon and works offline.</div>
+    <div class="row"><button class="btn" data-act="hideInstall">Got it</button></div></div>` : '';
+  return `<div class="navtitle">Now</div>${hint}
   <div class="banner"><span class="moon">☾</span>Hard stop at ${ns ? fmtTime(ns) : '—'}<span style="flex:1"></span><span class="dim small">in ${Math.floor(mins / 60)} h ${mins % 60} min</span></div>
   <div class="card"><div class="label">Your cues</div>
     ${seg('cueMin', c.minutes, [[15,'15 min'],[60,'1 hour'],[150,'2+ hours']])}
@@ -624,6 +643,7 @@ const A = {
   previewAlarm: () => play(variantFor(nextStop() || now())),
   delVoice: () => { S.voice = null; voiceBuf = null; ui.voiceMsg = 'Voice removed. Alarms end with the bell or knocks again.'; save(); render(); },
   stopSound: () => stopSound(),
+  hideInstall: () => { S.hideInstall = true; save(); render(); },
   resetLearn: () => { S.weights = {}; save(); render(); },
   ritual: () => ritualSheet(),
   finishRitual: () => { const a = active();
@@ -688,6 +708,7 @@ document.addEventListener('input', e => {
   else { S.settings[k] = val; if (k === 'breakMinutes') el.previousElementSibling.textContent = `Break reminder after ${val} min`; }
   save();
 });
+document.getElementById('labclose').onclick = () => document.getElementById('labpanel').classList.remove('open');
 document.getElementById('labfab').onclick = () => document.getElementById('labpanel').classList.toggle('open');
 
 /* ---------- Ticker: wrap-up, break and hard stop ---------- */
@@ -714,6 +735,9 @@ setInterval(tick, 1000);
 if (location.hash === '#demo' || !S.projects.length) seedDemo();
 const startTab = (location.hash.match(/tab=(\w+)/) || [])[1]; if (startTab) view.tab = startTab;
 render(); tick();
+if (navigator.standalone || matchMedia('(display-mode: standalone)').matches) document.body.classList.add('app');
+try { if ('serviceWorker' in navigator && location.protocol === 'https:' && !location.hostname.endsWith('claude.ai'))
+  navigator.serviceWorker.register('sw.js').catch(() => {}); } catch(e){}
 </script>
 </body>
 </html>
