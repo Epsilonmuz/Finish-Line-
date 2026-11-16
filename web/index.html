@@ -368,6 +368,13 @@ function template(idea){
 const ideaTitle = i => ((i.text.split(/[.\n]/)[0]) || i.text).slice(0, 60);
 const canPromote = () => !S.lastPromotion || now() - S.lastPromotion >= 7 * DAY;
 
+/* ---------- Tap-twice confirmation (pop-up dialogs are blocked in some viewers) ---------- */
+let armedKey = null, armedAt = 0;
+function armed(key, msg){
+  if (armedKey === key && Date.now() - armedAt < 5000){ armedKey = null; return true; }
+  armedKey = key; armedAt = Date.now(); toast('Are you sure?', msg); return false;
+}
+
 /* ---------- Toasts ---------- */
 let toastTimer = null;
 function toast(t, b){ document.getElementById('toastT').textContent = t; document.getElementById('toastB').textContent = b;
@@ -590,13 +597,13 @@ const A = {
       out.state = 'frozen'; logP(out, `Frozen to make room for ${p.name}`); S.events.push({date:now(), kind:'swap', detail:`${out.name} → ${p.name}: ${why}`}); }
     p.state = 'active'; p.why = why; p.activatedAt = now(); logP(p, `Activated: ${why}`); save(); closeSheet(); render(); },
   advance: v => { const p = proj(v), next = p.milestone + 1;
-    if (next === 3 && !confirm('Only if you really used it in a session, without lag. Confirm?')) return;
+    if (next === 3 && !armed('ship' + v, 'Tap again only if you really used it in a session, without lag.')) return;
     p.milestone = next; logP(p, `Reached "${MILESTONES[next].title}"`); if (next === 3){ p.state = 'shipped'; S.events.push({date:now(), kind:'ship', detail:p.name}); toast('Shipped 🏁', `${p.name} is done and used for real. A slot is free.`); }
     save(); render(); },
   diff: (v, el) => { const p = proj(el.dataset.id); p.nextDifficulty = +v; save(); render(); },
   log: v => { const n = document.getElementById('lognote').value.trim(); if (!n) return; logP(proj(v), n); save(); render(); },
   freeze: v => { const p = proj(v); p.state = 'frozen'; logP(p, 'Frozen'); S.events.push({date:now(), kind:'freeze', detail:p.name}); save(); render(); },
-  delete: v => { if (!confirm('Delete this project?')) return; S.projects = S.projects.filter(p => p.id !== v); view.detail = null; save(); render(); },
+  delete: v => { if (!armed('del' + v, 'Tap Delete again to delete this project.')) return; S.projects = S.projects.filter(p => p.id !== v); view.detail = null; save(); render(); },
   refreshCI: async () => { ui.ciErr = await refreshCI(S.projects); render(); },
   lang: v => { S.lang = v; save(); render(); },
   startSpeech, stopSpeech: () => stopSpeech(),
@@ -640,7 +647,7 @@ const A = {
   ciFail: () => { const p = active()[0]; if (!p) return; p.ci = {summary:'2/3 checks green', detail:'✅ build\n✅ pluginval\n❌ perf (Intel Mac)', failing:true, url:''}; save(); render(); toast('CI failed', `${p.name}: the Intel performance check is red.`); },
   stale: () => { const p = active()[0]; if (!p) return; p.lastProgressAt = now() - 30 * DAY; save(); render(); },
   sunday: () => { S.forceSunday = !S.forceSunday; save(); render(); toast('Lab', S.forceSunday ? "It's Sunday: the Vault review is open." : 'Back to the real weekday.'); },
-  wipe: () => { if (!confirm('Erase all lab data?')) return; S = fresh(); voiceBuf = null; save(); view = {tab:'now', detail:null}; render(); },
+  wipe: () => { if (!armed('wipe', 'Tap "Erase everything" again to erase all lab data.')) return; S = fresh(); voiceBuf = null; save(); view = {tab:'now', detail:null}; render(); },
 };
 
 function seedDemo(){
