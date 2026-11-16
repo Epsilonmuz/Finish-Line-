@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Finish Line uses a loud alarm for your nightly hard stop, so you stop before you burn out.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Finish Line records your voice for idea capture and for the spoken line in your hard-stop alarm.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Finish Line turns your spoken ideas into text on your iPhone.</string>
+</dict>
+</plist>

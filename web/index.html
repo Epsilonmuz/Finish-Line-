@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Finish Line · Web Testing Lab</title>
+<link rel="icon" href="icon.png">
+<style>
+:root{
+  --bg:#0e0e10; --card:#1a1a1c; --line:rgba(255,255,255,.08); --gold:#c9a86a; --stop:#eb2924;
+  --calm:#8c9eb3; --dim:rgba(255,255,255,.55); --ink:#f4f1ea; --lab:#5b8def;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#050506;color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+input,textarea,select{font:inherit;color:var(--ink);background:#111113;border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{resize:vertical;min-height:60px}
+a{color:var(--gold)}
+
+/* Layout: lab panel + phone */
+.shell{display:flex;gap:28px;justify-content:center;align-items:flex-start;padding:28px 20px;min-height:100%}
+.labpanel{width:300px;flex:none;position:sticky;top:28px}
+.labpanel h1{font-size:18px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+.labpanel h1 img{width:34px;height:34px;border-radius:8px}
+.labpanel p{color:var(--dim);font-size:13px;line-height:1.45;margin:6px 0 14px}
+.labgroup{background:#0f1218;border:1px solid rgba(91,141,239,.25);border-radius:14px;padding:12px;margin-bottom:12px}
+.labgroup h3{margin:0 0 8px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--lab)}
+.labbtn{display:block;width:100%;text-align:left;background:rgba(91,141,239,.10);border:1px solid rgba(91,141,239,.30);border-radius:10px;padding:8px 10px;margin:6px 0;font-size:13px}
+.labbtn:hover{background:rgba(91,141,239,.2)}
+.clock{font-variant-numeric:tabular-nums;font-size:13px;color:var(--dim)}
+.phone{width:390px;height:844px;flex:none;border-radius:54px;background:var(--bg);border:10px solid #1d1d20;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px #333 inset;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.status{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:14px;font-weight:600}
+.island{width:120px;height:32px;background:#000;border-radius:20px}
+.screen{flex:1;overflow-y:auto;padding:4px 16px 16px}
+.screen::-webkit-scrollbar{display:none}
+.navtitle{font-size:32px;font-weight:800;margin:6px 2px 14px;letter-spacing:-.5px}
+.back{color:var(--gold);background:none;border:none;padding:6px 0;font-size:16px}
+.tabbar{height:84px;flex:none;display:flex;border-top:1px solid var(--line);background:rgba(20,20,22,.95);padding-bottom:22px}
+.tabbar button{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;color:var(--dim)}
+.tabbar button.on{color:var(--gold)}
+.tabbar svg{width:24px;height:24px}
+
+/* Components */
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+.label{font-size:11.5px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.seg{display:flex;background:#111113;border-radius:9px;padding:2px;margin:8px 0;border:1px solid var(--line)}
+.seg button{flex:1;border:none;background:none;padding:7px 4px;border-radius:7px;font-size:13px;color:var(--dim)}
+.seg button.on{background:#2c2c30;color:var(--ink);font-weight:600}
+.big{font-size:22px;font-weight:800;line-height:1.2;margin:4px 0 6px}
+.dim{color:var(--dim)} .small{font-size:12.5px} .tiny{font-size:11px}
+.reason{color:var(--gold);font-size:13px;margin-top:6px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.btn{border-radius:12px;padding:9px 16px;border:1px solid var(--line);background:#26262a;font-weight:600;font-size:14px}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:#16130c}
+.btn.red{background:var(--stop);border-color:var(--stop);color:#fff}
+.btn.ghost{background:none}
+.btn:disabled{opacity:.4;cursor:default}
+.ladder{display:flex;gap:6px;margin-top:10px}
+.ladder div{flex:1;text-align:center;font-size:10.5px;color:var(--dim)}
+.ladder i{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.12);margin-bottom:4px}
+.ladder .on{color:var(--gold)} .ladder .on i{background:var(--gold)}
+.list{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:6px}
+.item{padding:12px 14px;border-bottom:1px solid var(--line);display:block;width:100%;text-align:left;background:none;border-left:none;border-right:none;border-top:none}
+.item:last-child{border-bottom:none}
+.sechead{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin:18px 4px 6px}
+.secfoot{font-size:12.5px;color:var(--dim);margin:0 4px 6px;line-height:1.4}
+.pname{font-weight:700;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.warn{color:var(--calm)}
+.banner{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin:4px 2px 14px}
+.banner .moon{color:var(--stop)}
+.field{margin:8px 0}
+.field label{display:block;font-size:12.5px;color:var(--dim);margin-bottom:4px}
+.mic{display:flex;gap:14px;align-items:center;width:100%;background:none;border:none;text-align:left;padding:6px 0}
+.mic .dot{width:52px;height:52px;border-radius:50%;background:var(--gold);display:grid;place-items:center;flex:none}
+.mic.rec .dot{background:var(--stop);animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.toast{position:absolute;left:12px;right:12px;top:52px;background:rgba(40,40,44,.97);border:1px solid var(--line);border-radius:18px;padding:12px 14px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.5);transform:translateY(-250%);opacity:0;transition:transform .35s,opacity .35s}
+.toast.show{transform:none;opacity:1}
+.toast b{display:block;font-size:14px}
+.toast span{font-size:13px;color:var(--dim)}
+.sheet{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:40;display:none;align-items:flex-end}
+.sheet.show{display:flex}
+.sheet .panel{background:#151517;width:100%;max-height:88%;overflow-y:auto;border-radius:22px 22px 0 0;padding:18px 16px 30px;border-top:1px solid var(--line)}
+.sheet .bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sheet .bar b{font-size:17px}
+.sheet .bar button{background:none;border:none;color:var(--gold);font-size:16px}
+.stop{position:absolute;inset:0;background:#000;z-index:25;display:none;flex-direction:column;padding:70px 28px 40px;text-align:center}
+.stop.show{display:flex}
+.stop h2{font-size:104px;font-weight:900;color:var(--stop);margin:30px 0 0;animation:pulse 1.2s infinite;letter-spacing:-2px}
+.stop .who{font-size:22px;font-weight:700;margin-top:8px}
+.stop ul{text-align:left;list-style:none;padding:0;margin:26px 0;color:rgba(255,255,255,.85);font-size:15px;line-height:2}
+.stop .spacer{flex:1}
+.stop .btn{width:100%;padding:15px;font-size:16px}
+.stop .snz{background:none;border:none;color:var(--dim);margin-top:14px}
+.timer{color:var(--gold);font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(91,141,239,.15);color:var(--lab);border:1px solid rgba(91,141,239,.35)}
+pre.ci{white-space:pre-wrap;font-family:inherit;font-size:13px;margin:6px 0}
+
+/* Phone-sized screens: the app fills the screen, lab tools open from a button */
+.labfab{display:none}
+@media (max-width: 760px){
+  .shell{padding:0;display:block}
+  .phone{width:100%;height:100dvh;border:none;border-radius:0}
+  .status{display:none}
+  .labpanel{display:none;position:fixed;inset:auto 0 0 0;width:auto;top:auto;max-height:70vh;overflow-y:auto;background:#0b0d12;z-index:50;padding:16px;border-top:1px solid rgba(91,141,239,.4);border-radius:18px 18px 0 0}
+  .labpanel.open{display:block}
+  .labfab{display:block;position:fixed;right:14px;bottom:96px;z-index:40;background:var(--lab);color:#fff;border:none;border-radius:22px;padding:9px 14px;font-weight:700;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+  .toast{top:12px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="labpanel" id="labpanel">
+    <h1><img src="icon.png" alt="">Finish Line Lab</h1>
+    <p>Test the iPhone app in your browser. Same screens, same rules, same alarm sounds. Data stays in this browser.</p>
+    <div class="labgroup">
+      <h3>Clock</h3>
+      <div class="clock" id="labclock"></div>
+      <button class="labbtn" data-act="warpStop">Jump to 1 min before hard stop</button>
+      <button class="labbtn" data-act="warp15">Skip ahead 15 minutes</button>
+      <button class="labbtn" data-act="warpReset">Back to real time</button>
+    </div>
+    <div class="labgroup">
+      <h3>Sounds</h3>
+      <button class="labbtn" data-act="fireWrap">Fire the 30-min wrap-up warning</button>
+      <button class="labbtn" data-act="fireBreak">Fire a break reminder</button>
+      <button class="labbtn" data-act="playVariant" data-v="0">Play alarm A (880 Hz, bell)</button>
+      <button class="labbtn" data-act="playVariant" data-v="1">Play alarm B (740 Hz, knocks)</button>
+      <button class="labbtn" data-act="playVariant" data-v="2">Play alarm C (988 Hz, bell)</button>
+      <button class="labbtn" data-act="playVariant" data-v="3">Play alarm D (660 Hz, knocks)</button>
+      <button class="labbtn" data-act="playSnooze">Play snooze sound</button>
+      <button class="labbtn" data-act="stopSound">Stop sound</button>
+    </div>
+    <div class="labgroup">
+      <h3>Scenarios</h3>
+      <button class="labbtn" data-act="demo">Load demo projects and ideas</button>
+      <button class="labbtn" data-act="ciFail">Make an active build fail</button>
+      <button class="labbtn" data-act="stale">Make a project stale (30 days)</button>
+      <button class="labbtn" data-act="sunday">Toggle "it's Sunday"</button>
+      <button class="labbtn" data-act="wipe">Erase everything</button>
+    </div>
+    <p class="tiny">Real app differences: on iPhone the alarm breaks through Silent mode, plans are written by Apple's on-device model, and speech runs on the phone. Here, speech uses your browser.</p>
+  </aside>
+
+  <div class="phone" id="phone">
+    <div class="status"><span id="sbtime">9:41</span><span class="island"></span><span>100%</span></div>
+    <div class="toast" id="toast"><b id="toastT"></b><span id="toastB"></span></div>
+    <main class="screen" id="screen"></main>
+    <nav class="tabbar" id="tabbar"></nav>
+    <div class="sheet" id="sheet"><div class="panel" id="sheetpanel"></div></div>
+    <div class="stop" id="stop"></div>
+  </div>
+</div>
+<button class="labfab" id="labfab">Lab</button>
+
+<script>
+/* ============================================================
+   Finish Line web lab: a faithful port of the SwiftUI app logic
+   ============================================================ */
+const KEY = 'fl-lab-v1';
+const MILESTONES = [
+  {title:'Planned', short:'Planned'},
+  {title:'Builds green', short:'Green'},
+  {title:'Loads in my DAW / runs on device', short:'Loads'},
+  {title:'Used in a real session', short:'Used'},
+];
+const DIFF = ['', 'Easy', 'Medium', 'Hard'];
+const VARIANTS = ['FL_HardStop_A_880_bell','FL_HardStop_B_740_knock','FL_HardStop_C_988_bell','FL_HardStop_D_660_knock'];
+const SNOOZE = 'FL_Snooze_E_830_bell', WRAP = 'FL_WrapUp';
+const MAX_ACTIVE = 2, DAY = 864e5;
+
+const fresh = () => ({
+  projects: [], ideas: [], events: [],
+  settings: {name:'Edison', owner:'Epsilonmuz', stopHour:0, stopMinute:0, wrapUp:true, breakMinutes:90, token:''},
+  cues: {minutes:60, energy:2, atDesk:true},
+  weights: {}, lastRitual:0, lastSnooze:0, lastPromotion:0, sessionStart:0, warp:0, forceSunday:false,
+  lang:'es-US', voice:null, firedWrap:0, firedStop:0,
+});
+let S = load();
+let view = {tab:'now', detail:null};
+let ui = {skipped:new Set(), draft:null, reviewEarly:false, promoteMsg:'', copied:false, alarmMsg:''};
+
+function load(){ try { return Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch(e){ return fresh(); } }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+const now = () => Date.now() + (S.warp || 0);
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtTime = t => new Date(t).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+const fmtDate = t => new Date(t).toLocaleDateString([], {month:'short', day:'numeric'});
+const daysSince = t => Math.floor((now() - t) / DAY);
+const proj = id => S.projects.find(p => p.id === id);
+
+/* ---------- Stop clock ---------- */
+function stopOn(dayTime){ const d = new Date(dayTime); d.setHours(S.settings.stopHour, S.settings.stopMinute, 0, 0); return d.getTime(); }
+function windowStart(){ const n = now(); for (const off of [0, -1]){ const s = stopOn(n + off*DAY); if (n >= s && n < s + 4*3600e3) return s; } return null; }
+function nextStop(){ const n = now(); for (let off = 0; off < 3; off++){ const s = stopOn(n + off*DAY); if (s > n) return s; } return null; }
+function snoozeActive(){ const ws = windowStart(); return ws && S.lastSnooze >= ws && now() < S.lastSnooze + 15*60e3; }
+function snoozeUsed(){ const ws = windowStart(); return !!(ws && S.lastSnooze >= ws); }
+function mustStop(){ const ws = windowStart(); if (!ws) return false; if (S.lastRitual >= ws) return false; if (snoozeActive()) return false; return true; }
+function variantFor(t){ const d = Math.floor(t / DAY); return VARIANTS[d % VARIANTS.length]; }
+
+/* ---------- Projects ---------- */
+function newProject(name, owner = '', repo = '', notes = ''){
+  return {id:uid(), name, owner, repo, state:'frozen', milestone:0, why:'', notes, nextIf:'', nextThen:'', nextMinutes:45,
+          nextDifficulty:2, nextNeedsMac:true, createdAt:now(), activatedAt:0, lastProgressAt:now(),
+          ci:{summary:'', detail:'', failing:false, url:''}, logs:[]};
+}
+function logP(p, note){ p.logs.unshift({date:now(), note}); p.lastProgressAt = now(); }
+const nextSentence = p => p.nextIf.trim() ? `When ${p.nextIf.trim()}, I will ${p.nextThen.trim()}.` : p.nextThen.trim();
+const active = () => S.projects.filter(p => p.state === 'active');
+
+/* ---------- Prioritizer (same cues and learning as the app) ---------- */
+const CUES = ['fit','energy','place','ci','gradient','stale'];
+function weights(){ const w = Object.assign({}, S.weights); CUES.forEach(c => { if (w[c] == null) w[c] = 1; }); return w; }
+function isSunday(){ return S.forceSunday || new Date(now()).getDay() === 0; }
+function rank(){
+  const c = S.cues, tasks = [];
+  for (const p of active()){
+    if (p.ci.failing) tasks.push({kind:'fixBuild', p, title:`Fix the failing build in ${p.name}`, detail:p.ci.summary, minutes:30, diff:2, mac:true});
+    if (p.nextThen.trim()) tasks.push({kind:'nextStep', p, title:p.nextThen, detail:nextSentence(p), minutes:p.nextMinutes, diff:p.nextDifficulty, mac:p.nextNeedsMac});
+    else tasks.push({kind:'writeStep', p, title:`Write the next if-then step for ${p.name}`, detail:'Two minutes. A clear next step is the best-supported trick in the whole app.', minutes:5, diff:1, mac:false});
+  }
+  const w = weights(), out = [];
+  for (const t of tasks){
+    const v = {
+      fit: t.minutes <= c.minutes ? 1 : Math.max(0, 1 - (t.minutes - c.minutes) / Math.max(t.minutes, 1)),
+      energy: 1 - Math.abs(t.diff - c.energy) / 2,
+      place: (t.mac && !c.atDesk) ? 0 : 1,
+      ci: t.kind === 'fixBuild' ? 1 : 0,
+      gradient: (t.p.milestone + 1) / 4,
+      stale: Math.min(1, daysSince(t.p.lastProgressAt) / 14),
+    };
+    let score = 0, best = ['fit', -1];
+    for (const k of CUES){ const part = w[k] * v[k]; score += part; if (k !== 'place' && part > best[1]) best = [k, part]; }
+    if (v.place === 0) score *= 0.2;
+    if (t.kind === 'fixBuild') best = ['ci', 1];
+    out.push({...t, score, top:best[0], reason:reason(best[0], t)});
+  }
+  const ideaCount = S.ideas.filter(i => !i.archived && !i.promotedAt).length;
+  if (!c.atDesk && isSunday() && ideaCount > 0)
+    out.push({kind:'reviewIdeas', p:null, title:'Weekly review: pick at most one idea', detail:`${ideaCount} ideas parked in the Vault.`, reason:"It's review day and you're away from the Mac", score:3.5, top:'place'});
+  if (!out.length) out.push({kind:'nothing', p:null, title: active().length ? 'Nothing fits right now' : 'Activate a project',
+    detail: active().length ? 'Try more time or change place.' : 'Pick up to two projects in the Projects tab.', reason:'', score:0, top:'fit'});
+  return out.sort((a, b) => b.score - a.score);
+}
+function reason(cue, t){
+  const p = t.p;
+  switch (cue){
+    case 'ci': return `${p.name}'s build is red; a quick, clear fix`;
+    case 'gradient': return p.milestone < 3 ? `${p.name} is close to "${MILESTONES[p.milestone + 1].title}"` : `${p.name} is nearly done`;
+    case 'stale': return `${p.name} hasn't moved in ${daysSince(p.lastProgressAt)} days`;
+    case 'energy': return `Matches your ${DIFF[S.cues.energy].toLowerCase()} energy`;
+    default: return `Fits in your ${S.cues.minutes} minutes`;
+  }
+}
+function learn(s, done){ const w = weights(); w[s.top] = done ? Math.min(2, w[s.top] * 1.04) : Math.max(0.3, w[s.top] * 0.94); S.weights = w; save(); }
+const skey = s => `${s.kind}-${s.p ? s.p.id : ''}`;
+function current(){ const r = rank(); return r.find(s => !ui.skipped.has(skey(s))) || r[0]; }
+
+/* ---------- Claude link ---------- */
+function claudePrompt(p){
+  const L = [`Project: ${p.name}` + (p.repo ? ` (repo ${p.owner}/${p.repo})` : ''),
+             `Stage: ${MILESTONES[p.milestone].title}` + (p.milestone < 3 ? `. Next rung: ${MILESTONES[p.milestone + 1].title}` : '')];
+  if (p.ci.summary) L.push(`CI: ${p.ci.summary}`);
+  if (p.ci.detail) L.push(p.ci.detail);
+  if (p.ci.failing) L.push('Task: fix the failing CI check first. Read the failing workflow log, find the cause, fix it, and keep plugin IDs unchanged.');
+  if (p.nextThen.trim()) L.push(`Next step: ${nextSentence(p)}`);
+  L.push(`Do only this step. Keep it small enough to finish in about ${p.nextMinutes} minutes, and tell me how to check it worked.`);
+  return L.join('\n');
+}
+function claudeURL(p){
+  const u = new URL('https://claude.ai/code/new');
+  u.searchParams.set('q', claudePrompt(p));
+  if (p.repo) u.searchParams.set('repo', `${p.owner}/${p.repo}`);
+  return u.toString();
+}
+
+/* ---------- GitHub CI (real API, token stays in this browser) ---------- */
+async function refreshCI(list){
+  const token = S.settings.token;
+  if (!token) return 'Add a GitHub token in Settings to see CI status';
+  let err = null;
+  for (const p of list.filter(p => p.state === 'active' && p.repo)){
+    try {
+      const r = await fetch(`https://api.github.com/repos/${p.owner}/${p.repo}/actions/runs?per_page=40`,
+        {headers:{Authorization:`Bearer ${token}`, Accept:'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28'}});
+      if (!r.ok) throw new Error(r.status === 401 ? 'GitHub token rejected' : r.status === 404 ? `Repo ${p.owner}/${p.repo} not found` : `GitHub error ${r.status}`);
+      const runs = (await r.json()).workflow_runs || [], seen = new Set(), latest = [];
+      for (const x of runs){ const path = (x.path || x.name || '').split('@')[0]; if (seen.has(path)) continue; seen.add(path); latest.push(x); }
+      applyCI(p, latest.map(x => ({name:x.name, status:x.status, conclusion:x.conclusion, url:x.html_url})));
+    } catch(e){ p.ci.summary = e.message; err = e.message; }
+  }
+  save(); render(); return err;
+}
+const ciIcon = r => r.status !== 'completed' ? '⏳' : r.conclusion === 'success' ? '✅' : ['failure','timed_out','startup_failure'].includes(r.conclusion) ? '❌' : '⚪️';
+function applyCI(p, runs){
+  if (!runs.length){ p.ci = {summary:'No CI runs yet', detail:'', failing:false, url:''}; return; }
+  const done = runs.filter(r => r.status === 'completed'), passed = done.filter(r => r.conclusion === 'success').length;
+  const failed = done.some(r => ['failure','timed_out','startup_failure'].includes(r.conclusion)), running = runs.length > done.length;
+  p.ci = {summary:`${passed}/${runs.length} checks green` + (running ? ' · running' : ''), detail:runs.map(r => `${ciIcon(r)} ${r.name}`).join('\n'),
+          failing:failed, url:(runs.find(r => r.conclusion === 'failure') || runs[0]).url || ''};
+  if (!failed && !running && passed === runs.length && p.milestone === 0){ p.milestone = 1; logP(p, 'All CI checks green, moved to "Builds green" automatically'); }
+}
+
+/* ---------- Audio: alarms, voice line, mixing ---------- */
+let AC = null, playing = null; const bufs = {};
+function ac(){ if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; }
+async function buf(name){ if (!bufs[name]){ const r = await fetch(`sounds/${name}.mp3`); bufs[name] = await ac().decodeAudioData(await r.arrayBuffer()); } return bufs[name]; }
+let voiceBuf = null;
+async function loadVoice(){ if (!S.voice || voiceBuf) return voiceBuf; try { const r = await fetch(S.voice); voiceBuf = await ac().decodeAudioData(await r.arrayBuffer()); } catch(e){ voiceBuf = null; } return voiceBuf; }
+/** Same mix as the app: voice normalised, placed to end 0.3 s before the alarm ends, alarm ducked under it. */
+async function mixed(name, withVoice = true){
+  const a = await buf(name); const v = withVoice ? await loadVoice() : null; if (!v) return a;
+  const sr = a.sampleRate, total = a.length, out = ac().createBuffer(1, total, sr), o = out.getChannelData(0); o.set(a.getChannelData(0));
+  const vd = v.getChannelData(0), vLen = Math.min(Math.round(v.length * sr / v.sampleRate), Math.round(4 * sr));
+  const start = Math.max(0, total - vLen - Math.round(0.3 * sr)), fade = Math.round(0.08 * sr);
+  let vPeak = 1e-4; for (let i = 0; i < vd.length; i++) vPeak = Math.max(vPeak, Math.abs(vd[i]));
+  for (let i = 0; i < vLen && start + i < total; i++){
+    const src = vd[Math.min(vd.length - 1, Math.floor(i * v.sampleRate / sr))] * (0.95 / vPeak);
+    const duck = 1 - 0.8 * Math.min(1, i / fade); o[start + i] = o[start + i] * duck + src;
+  }
+  for (let i = start + vLen; i < total; i++) o[i] *= 0.2;
+  let pk = 1e-4; for (let i = 0; i < total; i++) pk = Math.max(pk, Math.abs(o[i])); const g = 0.89 / pk; for (let i = 0; i < total; i++) o[i] *= g;
+  return out;
+}
+async function play(name, withVoice = true){
+  stopSound(); const b = await mixed(name, withVoice); const s = ac().createBufferSource(); s.buffer = b; s.connect(ac().destination); s.start(); playing = s;
+}
+function stopSound(){ try { playing && playing.stop(); } catch(e){} playing = null; }
+
+let recorder = null, recChunks = [];
+async function recordVoice(){
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    recorder = new MediaRecorder(stream); recChunks = [];
+    recorder.ondataavailable = e => recChunks.push(e.data);
+    recorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(recChunks, {type: recorder.mimeType || 'audio/webm'});
+      const fr = new FileReader();
+      fr.onload = () => { S.voice = fr.result; voiceBuf = null; save(); ui.voiceMsg = 'Done. Your voice now ends every hard-stop alarm.'; recorder = null; render(); };
+      fr.readAsDataURL(blob);
+    };
+    recorder.start(); ui.voiceMsg = 'Recording… say it like you mean it (max 4 s)'; render();
+    setTimeout(() => { if (recorder && recorder.state === 'recording') recorder.stop(); }, 4000);
+  } catch(e){ ui.voiceMsg = 'Microphone not allowed in this browser.'; render(); }
+}
+
+/* ---------- Speech capture for the Vault ---------- */
+let rec = null;
+function startSpeech(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR){ ui.speechErr = 'This browser has no speech recognition. Try Chrome or Safari, or type it.'; render(); return; }
+  rec = new SR(); rec.lang = S.lang; rec.interimResults = true; rec.continuous = true; ui.transcript = ''; ui.speechErr = '';
+  rec.onresult = e => { ui.transcript = Array.from(e.results).map(r => r[0].transcript).join(' '); renderLight(); };
+  rec.onerror = e => { ui.speechErr = `Speech error: ${e.error}`; };
+  rec.onend = () => { rec = null; if (ui.transcript){ ui.draft = {text:ui.transcript, plan:template(ui.transcript)}; } render(); };
+  rec.start(); render();
+}
+function stopSpeech(){ rec && rec.stop(); }
+function template(idea){
+  const first = (idea.split(/[.\n]/)[0] || idea).trim();
+  return S.lang.startsWith('es') ? `1. Meta: ${first}\n2. Versión mínima útil: …\n3. Primer paso (menos de 30 min): …`
+                                 : `1. Goal: ${first}\n2. Smallest useful version: …\n3. First step (under 30 min): …`;
+}
+const ideaTitle = i => ((i.text.split(/[.\n]/)[0]) || i.text).slice(0, 60);
+const canPromote = () => !S.lastPromotion || now() - S.lastPromotion >= 7 * DAY;
+
+/* ---------- Toasts ---------- */
+let toastTimer = null;
+function toast(t, b){ document.getElementById('toastT').textContent = t; document.getElementById('toastB').textContent = b;
+  const el = document.getElementById('toast'); el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 5000); }
+
+/* ============================================================
+   Rendering
+   ============================================================ */
+const icons = {
+  now:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>',
+  projects:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4"/><path d="M5 4h14v9H5"/><path d="M9 4v9M13 4v9M5 8.5h14" opacity=".6"/></svg>',
+  ideas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+};
+const ladder = m => `<div class="ladder">${MILESTONES.map((x, i) => `<div class="${i <= m ? 'on' : ''}"><i></i>${x.short}</div>`).join('')}</div>`;
+const seg = (act, val, opts) => `<div class="seg">${opts.map(([v, l]) => `<button class="${String(v) === String(val) ? 'on' : ''}" data-act="${act}" data-v="${v}">${l}</button>`).join('')}</div>`;
+
+function render(){
+  document.getElementById('tabbar').innerHTML = [['now','Now'],['projects','Projects'],['ideas','Vault'],['settings','Settings']]
+    .map(([k, l]) => `<button class="${view.tab === k ? 'on' : ''}" data-act="tab" data-v="${k}">${icons[k]}${l}</button>`).join('');
+  const el = document.getElementById('screen');
+  el.innerHTML = view.detail ? detailScreen(proj(view.detail)) :
+    view.tab === 'now' ? nowScreen() : view.tab === 'projects' ? projectsScreen() : view.tab === 'ideas' ? vaultScreen() : settingsScreen();
+  labClock();
+}
+function renderLight(){ const t = document.getElementById('live'); if (t) t.textContent = ui.transcript || ''; }
+
+function nowScreen(){
+  const s = current(), ns = nextStop(), c = S.cues;
+  const mins = ns ? Math.round((ns - now()) / 60e3) : 0;
+  let actions = '';
+  if (s.kind === 'reviewIdeas') actions = `<button class="btn primary" data-act="tab" data-v="ideas">Open Vault</button>`;
+  else if (s.kind === 'writeStep' || s.kind === 'nothing') actions = `<button class="btn primary" data-act="${s.kind === 'nothing' ? 'tab' : 'open'}" data-v="${s.kind === 'nothing' ? 'projects' : s.p.id}">${s.kind === 'nothing' ? 'Projects' : 'Write step'}</button>`;
+  else actions = `<button class="btn primary" data-act="doneSheet">Done</button>`;
+  if (s.kind !== 'nothing') actions += `<button class="btn" data-act="skip">Skip</button>`;
+  if (s.p) actions += `<span style="flex:1"></span><a class="btn ghost" style="color:var(--gold);text-decoration:none" href="${esc(claudeURL(s.p))}" target="_blank" rel="noopener" data-act="copyPrompt" data-v="${s.p.id}">✦ Ask Claude</a>`;
+  const sess = S.sessionStart ? `<div>Working for <span class="timer" id="sesstimer"></span></div><div class="dim small" style="margin-top:4px">Break reminder at ${S.settings.breakMinutes} min.</div><div class="row"><button class="btn" data-act="endSession">End session</button></div>`
+                              : `<div class="dim small">Start a session to get a break reminder after ${S.settings.breakMinutes} minutes.</div><div class="row"><button class="btn" data-act="startSession">Start session</button></div>`;
+  return `<div class="navtitle">Now</div>
+  <div class="banner"><span class="moon">☾</span>Hard stop at ${ns ? fmtTime(ns) : '—'}<span style="flex:1"></span><span class="dim small">in ${Math.floor(mins / 60)} h ${mins % 60} min</span></div>
+  <div class="card"><div class="label">Your cues</div>
+    ${seg('cueMin', c.minutes, [[15,'15 min'],[60,'1 hour'],[150,'2+ hours']])}
+    ${seg('cueEnergy', c.energy, [[1,'Low'],[2,'Medium'],[3,'High']])}
+    ${seg('cuePlace', c.atDesk, [[true,'At the Mac'],[false,'Away']])}
+  </div>
+  <div class="card"><div class="label">Do this now</div>
+    <div class="big">${esc(s.title)}</div>
+    ${s.detail && s.detail !== s.title ? `<div class="dim">${esc(s.detail)}</div>` : ''}
+    ${s.reason ? `<div class="reason">✦ ${esc(s.reason)}</div>` : ''}
+    ${s.p ? ladder(s.p.milestone) : ''}
+    <div class="row">${actions}</div>
+    ${ui.copied ? '<div class="tiny dim" style="margin-top:6px">Prompt copied</div>' : ''}
+  </div>
+  <div class="card"><div class="label">Work session</div>${sess}</div>`;
+}
+
+function row(p){
+  return `<button class="item" data-act="open" data-v="${p.id}">
+    <div class="pname">${esc(p.name)}${p.ci.failing ? '<span class="warn">⚠︎</span>' : '<span class="dim">›</span>'}</div>
+    ${ladder(p.milestone)}${p.ci.summary ? `<div class="tiny dim" style="margin-top:6px">${esc(p.ci.summary)}</div>` : ''}</button>`;
+}
+function projectsScreen(){
+  const a = active(), f = S.projects.filter(p => p.state === 'frozen'), s = S.projects.filter(p => p.state === 'shipped');
+  const stale = a.find(p => daysSince(p.lastProgressAt) >= 28);
+  return `<div class="navtitle" style="display:flex;justify-content:space-between">Projects<button class="back" style="font-size:28px" data-act="addSheet">+</button></div>
+  <div class="sechead">Active · ${a.length}/${MAX_ACTIVE}</div>
+  <div class="list">${a.length ? a.map(row).join('') : '<div class="item dim">No active project. Pick one below.</div>'}</div>
+  ${stale ? `<div class="secfoot">${esc(stale.name)} hasn't moved in ${daysSince(stale.lastProgressAt)} days. Freezing it is a fine choice, not a failure.</div>` : ''}
+  ${ui.ciErr ? `<div class="secfoot">${esc(ui.ciErr)}</div>` : ''}
+  <div class="row" style="margin:6px 0 0"><button class="btn" data-act="refreshCI">↻ Refresh CI</button></div>
+  <div class="sechead">Frozen</div>
+  <div class="list">${f.length ? f.map(p => `<div style="display:flex;align-items:center">${row(p)}<button class="btn" style="margin-right:10px;color:var(--gold)" data-act="activateSheet" data-v="${p.id}">Activate</button></div>`).join('') : '<div class="item dim">Nothing frozen.</div>'}</div>
+  ${s.length ? `<div class="sechead">Shipped (used for real)</div><div class="list">${s.map(row).join('')}</div>` : ''}`;
+}
+
+function detailScreen(p){
+  if (!p){ view.detail = null; return projectsScreen(); }
+  const nxt = p.milestone < 3 ? MILESTONES[p.milestone + 1] : null;
+  return `<button class="back" data-act="back">‹ Projects</button><div class="navtitle" style="font-size:26px">${esc(p.name)}</div>
+  <div class="sechead">Progress</div><div class="card">${ladder(p.milestone)}
+    <div class="row">${nxt ? (p.milestone === 0 ? `<div class="dim small">Moves up automatically when every CI check is green.</div><button class="btn" data-act="advance" data-v="${p.id}">Mark "${nxt.title}" myself</button>`
+      : `<button class="btn primary" data-act="advance" data-v="${p.id}">I confirm: ${nxt.title}</button>`) : '<div style="color:var(--gold)">✓ Shipped and used for real.</div>'}</div></div>
+  <div class="sechead">Next step (if-then)</div><div class="card">
+    <div class="field"><label>When… (cue: time, place)</label><input data-bind="nextIf" data-id="${p.id}" value="${esc(p.nextIf)}" placeholder="I open Xcode after dinner"></div>
+    <div class="field"><label>…I will (one concrete action)</label><input data-bind="nextThen" data-id="${p.id}" value="${esc(p.nextThen)}" placeholder="fix the preset crash"></div>
+    <div class="field"><label>About ${p.nextMinutes} min</label><input type="range" min="5" max="240" step="5" value="${p.nextMinutes}" data-bind="nextMinutes" data-id="${p.id}"></div>
+    ${seg('diff', p.nextDifficulty, [[1,'Easy'],[2,'Medium'],[3,'Hard']]).replace(/data-act="diff"/g, `data-act="diff" data-id="${p.id}"`)}
+    <label class="small" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" style="width:auto" data-bind="nextNeedsMac" data-id="${p.id}" ${p.nextNeedsMac ? 'checked' : ''}> Needs the Mac</label>
+    <div class="secfoot" style="margin-top:8px">Example: When I open Xcode after dinner, I will fix the preset crash.</div></div>
+  <div class="sechead">Log progress</div><div class="card" style="display:flex;gap:8px"><input id="lognote" placeholder="What did you do?"><button class="btn primary" data-act="log" data-v="${p.id}">Log</button></div>
+  <div class="sechead">GitHub CI</div><div class="card">${p.repo ? `<div class="tiny dim" style="font-family:monospace">${esc(p.owner)}/${esc(p.repo)}</div><div style="margin-top:6px">${esc(p.ci.summary || 'Not checked yet')}</div><pre class="ci">${esc(p.ci.detail)}</pre>${p.ci.url ? `<a href="${esc(p.ci.url)}" target="_blank" rel="noopener">Open latest run on GitHub</a>` : ''}`
+     : `<div class="field"><label>Owner</label><input data-bind="owner" data-id="${p.id}" value="${esc(p.owner)}"></div><div class="field"><label>Repo</label><input data-bind="repo" data-id="${p.id}" value="${esc(p.repo)}"></div>`}</div>
+  <div class="sechead">Ask Claude</div><div class="card"><a class="btn primary" style="text-decoration:none;display:inline-block" href="${esc(claudeURL(p))}" target="_blank" rel="noopener" data-act="copyPrompt" data-v="${p.id}">Open in Claude Code with the next step</a></div>
+  ${p.why || p.notes ? `<div class="sechead">Why / notes</div><div class="card">${esc(p.why)}${p.notes ? `<div class="small dim" style="white-space:pre-wrap;margin-top:6px">${esc(p.notes)}</div>` : ''}</div>` : ''}
+  <div class="sechead">History</div><div class="list">${p.logs.slice(0, 30).map(l => `<div class="item"><div>${esc(l.note)}</div><div class="tiny dim">${fmtDate(l.date)} ${fmtTime(l.date)}</div></div>`).join('') || '<div class="item dim">Nothing logged yet.</div>'}</div>
+  <div class="row">${p.state === 'active' ? `<button class="btn" data-act="freeze" data-v="${p.id}">Freeze this project</button>` : ''}<button class="btn" style="color:var(--stop)" data-act="delete" data-v="${p.id}">Delete</button></div>`;
+}
+
+function vaultScreen(){
+  const ideas = S.ideas.filter(i => !i.archived && !i.promotedAt).sort((a, b) => b.createdAt - a.createdAt), open = isSunday() || ui.reviewEarly;
+  const d = ui.draft;
+  return `<div class="navtitle">Idea Vault</div>
+  <div class="sechead">Capture</div><div class="card">
+    ${seg('lang', S.lang, [['es-US','Español'],['en-US','English']])}
+    <button class="mic ${rec ? 'rec' : ''}" data-act="${rec ? 'stopSpeech' : 'startSpeech'}"><span class="dot"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+      <span><b>${rec ? 'Listening… tap to stop' : 'Say the idea'}</b><br><span class="tiny dim">It gets parked with a 3-line plan. Not started.</span></span></button>
+    <div class="dim small" id="live">${rec ? esc(ui.transcript || '') : ''}</div>
+    ${ui.speechErr ? `<div class="small" style="color:var(--stop)">${esc(ui.speechErr)}</div>` : ''}
+    <button class="back small" data-act="typeIdea">Type it instead</button>
+  </div>
+  ${d ? `<div class="sechead">New idea</div><div class="card">
+    <div class="field"><label>Idea</label><textarea id="ideaText">${esc(d.text)}</textarea></div>
+    <div class="field"><label>3-line plan</label><textarea id="ideaPlan" rows="4">${esc(d.plan)}</textarea></div>
+    <div class="row"><button class="btn primary" data-act="park">Park it</button><button class="btn" data-act="replan">Make plan</button><button class="btn ghost" style="color:var(--stop)" data-act="discard">Discard</button></div>
+    <div class="secfoot" style="margin-top:8px">On iPhone 15 Pro or newer the plan is written by Apple's on-device model. Here: the template.</div></div>` : ''}
+  <div class="sechead">Weekly review</div><div class="card">
+    ${open ? (ideas.length ? ideas.map(i => `<div style="border-bottom:1px solid var(--line);padding:10px 0"><b>${esc(ideaTitle(i))}</b><div class="small dim" style="white-space:pre-wrap;margin-top:4px">${esc(i.plan)}</div><div class="tiny dim" style="margin-top:4px">${fmtDate(i.createdAt)} · ${i.lang.startsWith('es') ? 'ES' : 'EN'}</div>
+         <div class="row" style="margin-top:8px"><button class="btn" style="color:var(--gold)" data-act="promote" data-v="${i.id}">Promote</button><button class="btn" data-act="archive" data-v="${i.id}">Archive</button></div></div>`).join('') : '<div class="dim">Vault is empty.</div>')
+         + `<div class="secfoot" style="margin-top:10px">${canPromote() ? 'Promote one idea to a frozen project. One per week.' : 'You already promoted an idea this week.'}</div>${ui.promoteMsg ? `<div class="small" style="color:var(--gold)">${esc(ui.promoteMsg)}</div>` : ''}`
+      : `<b>${ideas.length} ideas parked</b><div class="small dim" style="margin-top:6px">The list opens on Sunday for your weekly review. Out of sight keeps them from pulling you off your active projects.</div><div class="row"><button class="back small" data-act="reviewEarly">Open review now</button></div>`}
+  </div>`;
+}
+
+function settingsScreen(){
+  const st = S.settings, hh = String(st.stopHour).padStart(2, '0'), mm = String(st.stopMinute).padStart(2, '0');
+  return `<div class="navtitle">Settings</div>
+  <div class="sechead">Hard stop</div><div class="card">
+    <div class="field"><label>Nightly hard stop</label><input type="time" id="stopTime" value="${hh}:${mm}"></div>
+    <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" style="width:auto" data-bind="wrapUp" ${st.wrapUp ? 'checked' : ''}> Wrap-up warning 30 min before</label>
+    <div class="field"><label>Break reminder after ${st.breakMinutes} min</label><input type="range" min="30" max="180" step="15" value="${st.breakMinutes}" data-bind="breakMinutes"></div>
+    <div class="small dim">Loud alarm on. On iPhone it breaks through Silent and Focus.</div>
+    <div class="row"><button class="btn" data-act="testAlarm">Test the alarm</button></div>
+    ${ui.alarmMsg ? `<div class="small" style="color:var(--gold);margin-top:6px">${esc(ui.alarmMsg)}</div>` : ''}
+    <div class="secfoot" style="margin-top:10px">The alarm plays at your ringer volume. If earbuds are connected, iOS may route it there, so the STOP screen and your Apple Watch matter more than the sound.</div></div>
+  <div class="sechead">Alarm voice</div><div class="card">
+    <button class="btn ${recorder ? 'red' : 'primary'}" data-act="${recorder ? 'stopRec' : 'recVoice'}">🎙 ${recorder ? 'Stop recording' : S.voice ? 'Re-record my voice' : 'Record my voice'}</button>
+    ${S.voice ? `<div class="row"><button class="btn" data-act="playVoice">Play my voice line</button><button class="btn" data-act="previewAlarm">Preview tonight's alarm with my voice</button><button class="btn" data-act="stopSound">Stop playback</button><button class="btn" style="color:var(--stop)" data-act="delVoice">Remove my voice</button></div>` : ''}
+    ${ui.voiceMsg ? `<div class="small dim" style="margin-top:8px">${esc(ui.voiceMsg)}</div>` : ''}
+    <div class="secfoot" style="margin-top:10px">Record up to 4 seconds, for example: "${esc(st.name)}. Hard stop. Write tomorrow's step." It's mixed into the end of every hard-stop alarm, with the alarm ducked under it.</div></div>
+  <div class="sechead">You</div><div class="card"><div class="field"><label>Name on the STOP screen</label><input data-bind="name" value="${esc(st.name)}"></div></div>
+  <div class="sechead">GitHub</div><div class="card">
+    <div class="field"><label>Default owner</label><input data-bind="owner" value="${esc(st.owner)}"></div>
+    <div class="field"><label>Fine-grained token (Actions: Read-only)</label><input type="password" data-bind="token" value="${esc(st.token)}" placeholder="github_pat_…"></div>
+    <div class="secfoot">Lab only: the token is kept in this browser's storage. On iPhone it lives in the Keychain.</div></div>
+  <div class="sechead">Smarts</div><div class="card"><div class="small dim">Prioritizer weights: ${CUES.map(c => `${c} ${weights()[c].toFixed(2)}`).join(' · ')}</div><div class="row"><button class="btn" data-act="resetLearn">Reset prioritizer learning</button></div></div>`;
+}
+
+/* ---------- Sheets and the STOP screen ---------- */
+function sheet(html){ document.getElementById('sheetpanel').innerHTML = html; document.getElementById('sheet').classList.add('show'); }
+function closeSheet(){ document.getElementById('sheet').classList.remove('show'); }
+
+function addSheet(){
+  sheet(`<div class="bar"><button data-act="closeSheet">Cancel</button><b>Add project</b><button data-act="addProject">Add</button></div>
+  <div class="field"><label>Name</label><input id="np-name" placeholder="Epsilon Bounce"></div>
+  <div class="field"><label>GitHub owner</label><input id="np-owner" placeholder="${esc(S.settings.owner)}"></div>
+  <div class="field"><label>Repo (optional)</label><input id="np-repo" placeholder="Epsilon-Bounce"></div>
+  <div class="secfoot">New projects start frozen. Activate one when a slot is free.</div>`);
+}
+function activateSheet(id){
+  const p = proj(id), a = active(), swap = a.length >= MAX_ACTIVE;
+  sheet(`<div class="bar"><button data-act="closeSheet">Cancel</button><b>Activate</b><button data-act="activate" data-v="${id}">${swap ? 'Swap' : 'Activate'}</button></div>
+  <div class="sechead">Commit to ${esc(p.name)}</div><textarea id="why" placeholder="Why this one, why now?"></textarea>
+  <div class="secfoot">Focusing on a goal you've really committed to helps push rival projects out of mind.</div>
+  ${swap ? `<div class="sechead">Both slots are full: swap one out</div><select id="freeze"><option value="">Choose…</option>${a.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
+  <div class="secfoot" style="margin-top:6px">Swaps are allowed and logged. Breaking a hard ban usually makes people quit the whole system.</div>` : ''}
+  <div class="small" style="color:var(--stop);margin-top:8px" id="actErr"></div>`);
+}
+function doneSheet(){
+  sheet(`<div class="bar"><button data-act="closeSheet">Cancel</button><b>Nice.</b><button data-act="saveDone">Save</button></div>
+  <div class="sechead">What did you get done? (one line)</div><input id="donenote" placeholder="e.g. fixed the preset crash">
+  <div class="secfoot" style="margin-top:8px">Writing it yourself matters: progress you record counts for more than progress tracked for you.</div>`);
+}
+function showStop(){
+  const ws = windowStart(), used = snoozeUsed();
+  const el = document.getElementById('stop');
+  el.innerHTML = `<h2>STOP</h2><div class="who">${esc(S.settings.name)}, done for today.</div>
+    ${ws ? `<div class="dim" style="margin-top:6px">You chose to stop at ${fmtTime(ws)}.</div>` : ''}
+    <ul><li>💻 Save and close the project on your Mac</li><li>✏️ Write tomorrow's first step (2 min)</li><li>🎧 Headphones off</li></ul>
+    <div class="spacer"></div>
+    <button class="btn red" data-act="ritual">Start shutdown</button>
+    <button class="snz" data-act="snooze" ${used ? 'disabled' : ''}>${used ? 'No snooze left tonight' : 'Snooze 15 min (1 left, logged)'}</button>`;
+  el.classList.add('show');
+}
+function ritualSheet(){
+  const a = active();
+  sheet(`<div class="bar"><button data-act="closeSheet">Back</button><b>Shutdown</b><button data-act="finishRitual">Done for today</button></div>
+  ${a.length ? `<div class="sechead">Tomorrow, first thing</div><select id="rp">${a.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+  <div class="field"><label>When…</label><input id="rIf" placeholder="I open Xcode after lunch"></div>
+  <div class="field"><label>…I will (one action)</label><input id="rThen" placeholder="fix the CPU spike in the analyser"></div>` : ''}
+  <div class="sechead">Today, in one line (optional)</div><input id="rDid" placeholder="What got done">
+  <div class="secfoot" style="margin-top:8px">Stopping with a clear next step makes tomorrow's start easy, and lets tonight's work go.</div>
+  <div class="small" style="color:var(--stop)" id="rErr"></div>`);
+}
+
+/* ============================================================
+   Actions
+   ============================================================ */
+const A = {
+  tab: v => { view = {tab:v, detail:null}; closeSheet(); render(); document.getElementById('screen').scrollTop = 0; },
+  open: v => { view.detail = v; render(); document.getElementById('screen').scrollTop = 0; },
+  back: () => { view.detail = null; render(); },
+  cueMin: v => { S.cues.minutes = +v; ui.skipped.clear(); save(); render(); },
+  cueEnergy: v => { S.cues.energy = +v; ui.skipped.clear(); save(); render(); },
+  cuePlace: v => { S.cues.atDesk = v === 'true'; ui.skipped.clear(); save(); render(); },
+  skip: () => { const s = current(); learn(s, false); ui.skipped.add(skey(s)); render(); },
+  doneSheet, addSheet, closeSheet,
+  saveDone: () => { const s = current(), n = document.getElementById('donenote').value.trim();
+    if (s.p){ logP(s.p, n || s.title); if (s.kind === 'nextStep'){ s.p.nextThen = ''; s.p.nextIf = ''; } learn(s, true); }
+    save(); closeSheet(); render(); },
+  copyPrompt: v => { try { navigator.clipboard.writeText(claudePrompt(proj(v))); ui.copied = true; } catch(e){} },
+  startSession: () => { S.sessionStart = now(); save(); render(); },
+  endSession: () => { S.sessionStart = 0; save(); render(); },
+  addProject: () => { const n = document.getElementById('np-name').value.trim(); if (!n) return;
+    const repo = document.getElementById('np-repo').value.trim(), owner = document.getElementById('np-owner').value.trim() || S.settings.owner;
+    S.projects.push(newProject(n, repo ? owner : '', repo)); save(); closeSheet(); render(); },
+  activateSheet: v => activateSheet(v),
+  activate: v => { const p = proj(v), why = document.getElementById('why').value.trim(), fz = document.getElementById('freeze');
+    if (!why){ document.getElementById('actErr').textContent = 'Write why this one, why now.'; return; }
+    if (active().length >= MAX_ACTIVE){ const out = fz && proj(fz.value); if (!out){ document.getElementById('actErr').textContent = 'Choose a project to freeze.'; return; }
+      out.state = 'frozen'; logP(out, `Frozen to make room for ${p.name}`); S.events.push({date:now(), kind:'swap', detail:`${out.name} → ${p.name}: ${why}`}); }
+    p.state = 'active'; p.why = why; p.activatedAt = now(); logP(p, `Activated: ${why}`); save(); closeSheet(); render(); },
+  advance: v => { const p = proj(v), next = p.milestone + 1;
+    if (next === 3 && !confirm('Only if you really used it in a session, without lag. Confirm?')) return;
+    p.milestone = next; logP(p, `Reached "${MILESTONES[next].title}"`); if (next === 3){ p.state = 'shipped'; S.events.push({date:now(), kind:'ship', detail:p.name}); toast('Shipped 🏁', `${p.name} is done and used for real. A slot is free.`); }
+    save(); render(); },
+  diff: (v, el) => { const p = proj(el.dataset.id); p.nextDifficulty = +v; save(); render(); },
+  log: v => { const n = document.getElementById('lognote').value.trim(); if (!n) return; logP(proj(v), n); save(); render(); },
+  freeze: v => { const p = proj(v); p.state = 'frozen'; logP(p, 'Frozen'); S.events.push({date:now(), kind:'freeze', detail:p.name}); save(); render(); },
+  delete: v => { if (!confirm('Delete this project?')) return; S.projects = S.projects.filter(p => p.id !== v); view.detail = null; save(); render(); },
+  refreshCI: async () => { ui.ciErr = await refreshCI(S.projects); render(); },
+  lang: v => { S.lang = v; save(); render(); },
+  startSpeech, stopSpeech: () => stopSpeech(),
+  typeIdea: () => { ui.draft = {text:'', plan:''}; render(); },
+  replan: () => { const t = document.getElementById('ideaText').value; ui.draft = {text:t, plan:template(t)}; render(); },
+  park: () => { const t = document.getElementById('ideaText').value.trim(); if (!t) return; const pl = document.getElementById('ideaPlan').value.trim() || template(t);
+    S.ideas.push({id:uid(), text:t, plan:pl, lang:S.lang, createdAt:now(), promotedAt:0, archived:false}); ui.draft = null; save(); render(); toast('Idea parked', 'Not started. See you on Sunday.'); },
+  discard: () => { ui.draft = null; render(); },
+  reviewEarly: () => { ui.reviewEarly = true; render(); },
+  promote: v => { if (!canPromote()){ ui.promoteMsg = 'One promotion per week. This one waits.'; render(); return; }
+    const i = S.ideas.find(x => x.id === v); i.promotedAt = now(); S.lastPromotion = now();
+    S.projects.push(newProject(ideaTitle(i), '', '', `${i.text}\n\n${i.plan}`)); S.events.push({date:now(), kind:'promote', detail:ideaTitle(i)});
+    ui.promoteMsg = `"${ideaTitle(i)}" is now a frozen project.`; save(); render(); },
+  archive: v => { S.ideas.find(x => x.id === v).archived = true; save(); render(); },
+  testAlarm: () => { ui.alarmMsg = 'Playing tonight\'s alarm. On iPhone it fires in 1 minute; lock the phone and wait.'; play(variantFor(nextStop() || now())); render(); },
+  recVoice: () => recordVoice(), stopRec: () => recorder && recorder.stop(),
+  playVoice: async () => { const v = await loadVoice(); if (!v) return; stopSound(); const s = ac().createBufferSource(); s.buffer = v; s.connect(ac().destination); s.start(); playing = s; },
+  previewAlarm: () => play(variantFor(nextStop() || now())),
+  delVoice: () => { S.voice = null; voiceBuf = null; ui.voiceMsg = 'Voice removed. Alarms end with the bell or knocks again.'; save(); render(); },
+  stopSound: () => stopSound(),
+  resetLearn: () => { S.weights = {}; save(); render(); },
+  ritual: () => ritualSheet(),
+  finishRitual: () => { const a = active();
+    if (a.length){ const p = proj(document.getElementById('rp').value), then = document.getElementById('rThen').value.trim();
+      if (!then){ document.getElementById('rErr').textContent = 'Write one action for tomorrow first.'; return; }
+      p.nextIf = document.getElementById('rIf').value.trim(); p.nextThen = then;
+      const did = document.getElementById('rDid').value.trim(); if (did) logP(p, did); }
+    S.lastRitual = now(); S.sessionStart = 0; save(); stopSound(); closeSheet(); document.getElementById('stop').classList.remove('show'); render(); toast('Done for today', 'Tomorrow starts with one clear step. Rest.'); },
+  snooze: () => { if (snoozeUsed()) return; S.lastSnooze = now(); S.events.push({date:now(), kind:'snooze', detail:'Snoozed hard stop 15 min'}); save(); stopSound();
+    document.getElementById('stop').classList.remove('show'); toast('Snoozed 15 minutes', 'Logged. No more snoozes tonight. (Lab: "Skip ahead 15 minutes".)'); render(); },
+
+  /* Lab controls */
+  warpStop: () => { const ns = nextStop(); S.warp += ns - now() - 60e3; S.firedStop = 0; save(); render(); toast('Lab clock', `It's now ${fmtTime(now())}. The hard stop fires in 1 minute.`); },
+  warp15: () => { S.warp += 15 * 60e3; save(); tick(); render(); },
+  warpReset: () => { S.warp = 0; save(); render(); },
+  fireWrap: () => { play(WRAP, false); toast('30 minutes to hard stop', "Finish the step you're on. Don't start a new one."); },
+  fireBreak: () => { play(WRAP, false); toast(`${S.settings.breakMinutes} minutes in. Take a 10-minute break.`, 'Stand up, look far away, drink water.'); },
+  playVariant: v => play(VARIANTS[+v]),
+  playSnooze: () => play(SNOOZE),
+  demo: () => { seedDemo(); render(); toast('Demo loaded', 'Two active projects, three frozen, one shipped, three parked ideas.'); },
+  ciFail: () => { const p = active()[0]; if (!p) return; p.ci = {summary:'2/3 checks green', detail:'✅ build\n✅ pluginval\n❌ perf (Intel Mac)', failing:true, url:''}; save(); render(); toast('CI failed', `${p.name}: the Intel performance check is red.`); },
+  stale: () => { const p = active()[0]; if (!p) return; p.lastProgressAt = now() - 30 * DAY; save(); render(); },
+  sunday: () => { S.forceSunday = !S.forceSunday; save(); render(); toast('Lab', S.forceSunday ? "It's Sunday: the Vault review is open." : 'Back to the real weekday.'); },
+  wipe: () => { if (!confirm('Erase all lab data?')) return; S = fresh(); voiceBuf = null; save(); view = {tab:'now', detail:null}; render(); },
+};
+
+function seedDemo(){
+  const keep = {settings:S.settings, voice:S.voice, lang:S.lang};
+  S = Object.assign(fresh(), keep);
+  const d = (name, repo, state, m, extra = {}) => Object.assign(newProject(name, repo ? 'Epsilonmuz' : '', repo), {state, milestone:m}, extra);
+  const bounce = d('Epsilon Bounce', 'Epsilon-Bounce', 'active', 2, {why:'Closest to usable. I want it in my next dembow session.', nextIf:'I open Xcode after dinner', nextThen:'fix the swing knob jumping at 75%', nextMinutes:45, nextDifficulty:2,
+    ci:{summary:'3/3 checks green', detail:'✅ build\n✅ pluginval\n✅ perf (Intel Mac)', failing:false, url:''}});
+  const hunter = d('Sample Hunter', 'Sample-Hunter', 'active', 1, {why:'Phone app I will use every day once it records cleanly.', nextIf:'', nextThen:'', nextMinutes:30, nextDifficulty:1, nextNeedsMac:false,
+    ci:{summary:'2/2 checks green', detail:'✅ build\n✅ tests', failing:false, url:''}});
+  hunter.lastProgressAt = now() - 9 * DAY;
+  logP(bounce, 'Swing presets load correctly'); logP(bounce, 'Reached "Loads in my DAW / runs on device"');
+  S.projects = [bounce, hunter,
+    d('Muzi Tame', 'Muzi-Tame', 'frozen', 1), d('Epsilon Expansion', 'EpsilonExpantion-', 'frozen', 1, {notes:'Fix the lag before anything else.'}),
+    d('Pitch Lab', '', 'frozen', 0), d('Epsilon FET', 'Epsilon-FET', 'shipped', 3)];
+  S.ideas = [
+    {id:uid(), text:'Un plugin que convierte cualquier loop en dembow con un solo botón', plan:'1. Meta: un botón que convierte cualquier loop en dembow\n2. Versión mínima útil: solo batería, 3 patrones\n3. Primer paso (menos de 30 min): anotar los 3 patrones en MIDI', lang:'es-US', createdAt:now() - 3 * DAY, promotedAt:0, archived:false},
+    {id:uid(), text:'Room Thief: snap a photo of a room and get a matching reverb', plan:'1. Goal: a reverb built from a photo of a room\n2. Smallest useful version: 5 preset room sizes picked from the photo\n3. First step (under 30 min): list 5 rooms and their reverb times', lang:'en-US', createdAt:now() - 2 * DAY, promotedAt:0, archived:false},
+    {id:uid(), text:'Producer tag maker with my voice', plan:'1. Goal: branded producer tags from one recording\n2. Smallest useful version: 3 styles (whisper, pitched, delay)\n3. First step (under 30 min): record the raw tag', lang:'en-US', createdAt:now() - DAY, promotedAt:0, archived:false},
+  ];
+  S.cues = {minutes:60, energy:2, atDesk:true};
+  save();
+}
+
+/* ---------- Event wiring ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const f = A[el.dataset.act]; if (!f) return;
+  if (el.tagName !== 'A') e.preventDefault();
+  ac(); f(el.dataset.v, el);
+  if (window.innerWidth <= 760 && el.closest('#labpanel')) document.getElementById('labpanel').classList.remove('open');
+});
+document.addEventListener('input', e => {
+  const el = e.target; if (el.id === 'stopTime'){ const [h, m] = el.value.split(':').map(Number); S.settings.stopHour = h || 0; S.settings.stopMinute = m || 0; S.firedStop = 0; save(); return; }
+  const k = el.dataset.bind; if (!k) return;
+  const val = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value;
+  if (el.dataset.id){ const p = proj(el.dataset.id); p[k] = val; if (k === 'nextMinutes') el.previousElementSibling.textContent = `About ${val} min`; }
+  else { S.settings[k] = val; if (k === 'breakMinutes') el.previousElementSibling.textContent = `Break reminder after ${val} min`; }
+  save();
+});
+document.getElementById('labfab').onclick = () => document.getElementById('labpanel').classList.toggle('open');
+
+/* ---------- Ticker: wrap-up, break and hard stop ---------- */
+function labClock(){
+  const t = now(), lc = document.getElementById('labclock');
+  if (lc) lc.textContent = `Lab time: ${new Date(t).toLocaleString([], {weekday:'short', hour:'numeric', minute:'2-digit', second:'2-digit'})}${S.warp ? ' (shifted)' : ''}${S.forceSunday ? ' · Sunday mode' : ''}`;
+  document.getElementById('sbtime').textContent = new Date(t).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}).replace(/\s?[AP]M/i, '');
+  const st = document.getElementById('sesstimer');
+  if (st && S.sessionStart){ const s = Math.floor((t - S.sessionStart) / 1000); st.textContent = `${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
+}
+function tick(){
+  labClock();
+  const ns = nextStop(), t = now();
+  if (S.settings.wrapUp && ns && ns - t <= 30 * 60e3 && ns - t > 29 * 60e3 && S.firedWrap !== ns){ S.firedWrap = ns; save(); A.fireWrap(); }
+  if (S.sessionStart && t - S.sessionStart >= S.settings.breakMinutes * 60e3 && !ui.breakFired){ ui.breakFired = true; A.fireBreak(); }
+  if (mustStop() && !document.getElementById('stop').classList.contains('show')){
+    const ws = windowStart();
+    if (S.firedStop !== ws){ S.firedStop = ws; save(); play(variantFor(ws)); }
+    else if (S.lastSnooze >= ws && S.lastSnooze + 15 * 60e3 <= t && S.firedStop !== -ws){ S.firedStop = -ws; save(); play(SNOOZE); }
+    showStop();
+  }
+}
+setInterval(tick, 1000);
+if (location.hash === '#demo' || !S.projects.length) seedDemo();
+const startTab = (location.hash.match(/tab=(\w+)/) || [])[1]; if (startTab) view.tab = startTab;
+render(); tick();
+</script>
+</body>
+</html>
