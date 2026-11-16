@@ -1,0 +1,64 @@
+name: iPhone build
+
+# Builds Finish Line on GitHub's Macs (no Xcode needed on yours) and
+# produces an unsigned FinishLine.ipa for SideStore / AltStore to sign
+# with your free Apple ID. Pushes to main also publish it as a Release.
+on:
+  push:
+    paths-ignore: ["web/**", "docs/**", "README.md"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pick Xcode 26
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XC" ]; then echo "::error::No Xcode 26 on this runner"; ls -d /Applications/Xcode*.app; exit 1; fi
+          echo "Using $XC"
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i iphoneos
+
+      - name: Build (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project FinishLine.xcodeproj -target FinishLine \
+            -sdk iphoneos -configuration Release \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build.log | grep -E "error:|warning: .*deprecated|\*\* BUILD" || true
+          test -d build/Release-iphoneos/FinishLine.app
+
+      - name: Show errors
+        if: failure()
+        run: grep -E "error:" build.log | sort -u | head -60 || true
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/Release-iphoneos/FinishLine.app Payload/
+          zip -qry FinishLine.ipa Payload
+          ls -lh FinishLine.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FinishLine-ipa
+          path: FinishLine.ipa
+
+      - name: Publish release (main only)
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+          gh release create "$TAG" FinishLine.ipa \
+            --title "Finish Line build ${{ github.run_number }}" \
+            --notes "Install with SideStore: open this page on your iPhone, download FinishLine.ipa, then open it in SideStore."
